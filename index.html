@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- start server -->
+<!-- python3 -m http.server 8000 -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eligent - Scroll Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow-x: hidden;
+        }
+
+        nav {
+            position: fixed;
+            display: flex;
+            flex-direction: row;
+            padding: 16px;
+            margin: 16px;
+            width: calc(100% - 32px);
+            top: 0;
+            left: 0;
+            z-index: 200;
+            border: white solid 0.2px;
+            justify-content: space-between;
+            border-radius: 10px;
+            color: white;
+            background: #005B61;
+        }
+
+        .navItems {
+            justify-content: space-between;
+            display: flex;
+            flex-direction: row;
+            gap: 12px
+        }
+
+        .section-above {
+            position: sticky;
+            top: 0;
+            background: #005B61;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            height: 50svh;
+            width: 100%;
+        }
+
+        .sticky {
+            transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 200px;
+        }
+
+        .sticky p {
+            width: 40%;
+            font-size: 20px;
+            font-weight: normal;
+        }
+
+        .sticky-channel {
+            position: relative;
+            background: #005B61;
+        }
+
+        .three-section {
+            position: sticky;
+            top: 0;
+            height: 100svh;
+            width: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .model-section {
+            height: 100svh;
+            position: relative;
+            margin-top: -100svh;
+        }
+
+        .features-section {
+            height: 400svh;
+            position: relative;
+        }
+
+        .feature-position {
+            position: sticky;
+            width: 100%;
+            right: 0%;
+            top: 45%;
+            z-index: 100;
+
+        }
+
+        .feature-text {
+            width: 100%;
+            left: 10%;
+            top: 50%;
+            position: absolute;
+            color: white;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            max-width: 320px;
+        }
+
+        .feature-text.active {
+            opacity: 1;
+        }
+
+        .feature-text h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-text p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .section-below {
+            height: 100svh;
+            background: #005B61;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .section-below h1 {
+            text-align: center;
+            max-width: 1200px;
+        }
+
+        a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .dot-wrapper {
+            position: sticky;
+            z-index: 10000;
+            height: 16px;
+            width: 100%;
+            top: 90svh;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .dot {
+            height: 16px;
+            width: 16px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 100%;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        .dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <p>eligent</p>
+        <div class="navItems">
+            <p>Produkter</p>
+            <p>Systemet</p>
+            <a href="/design.html">Design</a>
+            <p>Resurser</p>
+            <p>Om oss</p>
+        </div>
+    </nav>
+
+    <div class="sticky-channel">
+        <div class="section-above">
+            <div class="sticky">
+                <h1>Systemet</h1>
+                <p>Eligent sin unike installasjonssystem er utviklet i samarbeid med erfarene elektroinstallatører.</p>
+            </div>
+        </div>
+
+        <div class="three-section">
+            <div id="canvas-container"></div>
+        </div>
+
+        <div class="model-section"></div>
+
+        <div class="features-section">
+            <div class="feature-position">
+                <div class="feature-text" id="feature-1">
+                    <h2>Luke</h2>
+                    <p>Enkel tilgang til installasjonen gjennom den integrerte luken.</p>
+                </div>
+                <div class="feature-text" id="feature-2">
+                    <h2>Stender feste</h2>
+                    <p>Robust og fleksibelt festesystem for enkel montering.</p>
+                </div>
+                <div class="feature-text" id="feature-3">
+                    <h2>Ferdig klemmer</h2>
+                    <p>Forhåndsinstallerte klemmer som sparer tid ved installasjon.</p>
+                </div>
+            </div>
+            <div class="dot-wrapper">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-below">
+        <h1>Eligent sin unike installasjonssystem er utviklet i samarbeid med erfarene elektroinstallatører.</h1>
+    </div>
+    <div class="section-below">
+        <h1>Eligent</h1>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = null;
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.z = 5;
+
+        // Renderer setup with transparency and PBR support
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+        });
+        renderer.setClearColor(0x000000, 0);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        // Enable proper color management and tone mapping for realistic rendering
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Create environment map for realistic reflections and lighting
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+
+        // Create a gradient environment sphere (simulates HDRI lighting)
+        const envScene = new THREE.Scene();
+        const envGeometry = new THREE.SphereGeometry(500, 60, 40);
+        envGeometry.scale(-1, 1, 1);
+
+        const envMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                topColor: { value: new THREE.Color(0x87CEEB) },      // Sky blue
+                bottomColor: { value: new THREE.Color(0x003a3d) },   // Dark teal
+                offset: { value: 33 },
+                exponent: { value: 0.6 }
+            },
+            vertexShader: `
+                varying vec3 vWorldPosition;
+                void main() {
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 topColor;
+                uniform vec3 bottomColor;
+                uniform float offset;
+                uniform float exponent;
+                varying vec3 vWorldPosition;
+                void main() {
+                    float h = normalize(vWorldPosition + offset).y;
+                    gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
+                }
+            `,
+            side: THREE.BackSide
+        });
+
+        const envSphere = new THREE.Mesh(envGeometry, envMaterial);
+        envScene.add(envSphere);
+
+        const envMap = pmremGenerator.fromScene(envScene).texture;
+        scene.environment = envMap;
+        pmremGenerator.dispose();
+
+        // Lighting setup - studio-style lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        // // Key light (main light source)
+        const keyLight = new THREE.DirectionalLight(0xffffff, 2);
+        keyLight.position.set(5, 5, 5);
+        scene.add(keyLight);
+
+        // Fill light (softer, from opposite side)
+        const fillLight = new THREE.DirectionalLight(0xffffff, 1);
+        fillLight.position.set(-5, 5, -2);
+        scene.add(fillLight);
+
+        // // Rim light (highlights edges)
+        const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        rimLight.position.set(0, 5, -5);
+        scene.add(rimLight);
+
+        // Create feature point markers (white dots)
+        const featureDots = [];
+        const dotMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+        // Feature positions - positioned in front of the model (positive Z)
+        const featurePositions = [
+            { x: 0.46, y: -0.35, z: 2 },       // Luke (top area, in front)
+            { x: 1.3, y: -0.3, z: 2 },        // Stender feste (left side, in front)
+            { x: -0., y: 0.8, z: 2 }     // Ferdig klemmer (right bottom, in front)
+        ];
+
+        featurePositions.forEach((pos, index) => {
+            const dot = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 16, 16),
+                dotMaterial.clone()
+            );
+            dot.position.set(pos.x, pos.y, pos.z);
+            dot.visible = false;
+            scene.add(dot);
+            featureDots.push(dot);
+        });
+
+        // Starting rotation: 1.5 spins (3π) on Y, 0.5 sideways (0.5π) on Z
+        // Ending rotation: Math.PI on Y, 0 on Z
+        const startRotationY = Math.PI * 3;    // 1.5 full rotations
+        const startRotationZ = Math.PI * 0.6;  // 0.5 sideways
+        const endRotationY = Math.PI * 1.2;          // 180 deg (current end position)
+        const endRotationZ = 0;
+
+        // Animation state for smooth transitions
+        let targetRotationY = startRotationY;
+        let targetRotationZ = startRotationZ;
+        let currentRotationY = startRotationY;
+        let currentRotationZ = startRotationZ;
+        const rotationLerpSpeed = 0.01;
+
+        // Load GLB model
+        let model = null;
+        const loader = new GLTFLoader();
+
+        loader.load(
+            'eligent-2.glb',
+            (gltf) => {
+                model = gltf.scene;
+
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const scale = 4 / maxDim;
+                model.scale.multiplyScalar(scale);
+
+                const scaledBox = new THREE.Box3().setFromObject(model);
+                const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+
+                model.position.set(-scaledCenter.x, -scaledCenter.y, -scaledCenter.z);
+
+                // Initial rotation: 1.5 spins + 0.5 sideways
+                model.rotation.y = startRotationY;
+                model.rotation.x = 0;
+                model.rotation.z = startRotationZ;
+
+                scene.add(model);
+            },
+            (progress) => {
+                console.log('Loading:', (progress.loaded / progress.total * 100) + '%');
+            },
+            (error) => {
+                console.error('Error loading model:', error);
+            }
+        );
+
+        // Scroll animation
+        function updateScroll() {
+            const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+
+            const sectionAbove = document.querySelector('.section-above');
+            const stickyChannel = document.querySelector('.sticky-channel');
+            const modelSection = document.querySelector('.model-section');
+            const featuresSection = document.querySelector('.features-section');
+            const titleElement = document.querySelector('.sticky');
+
+            const channelStart = sectionAbove.offsetHeight;
+            const modelSectionHeight = modelSection.offsetHeight;
+            const featuresSectionHeight = featuresSection.offsetHeight;
+
+            const scrollInChannel = scrollY - channelStart;
+            const channelTotalHeight = modelSectionHeight + featuresSectionHeight;
+
+            // PHASE 1: Before entering the channel (in section-above)
+            if (scrollY < channelStart) {
+                const progress = scrollY / channelStart;
+
+                const fadeStart = 0.3;
+                const fadeEnd = 0.6;
+                let titleOpacity = 1;
+
+                if (progress > fadeStart) {
+                    titleOpacity = 1 - ((progress - fadeStart) / (fadeEnd - fadeStart));
+                    titleOpacity = Math.max(0, Math.min(1, titleOpacity));
+                }
+
+                if (titleElement) {
+                    titleElement.style.opacity = titleOpacity;
+                }
+
+                // ========================================
+                // PHASE 1 ROTATION: Animate from start (1.5 spins + 0.5 sideways) to end (180 deg, upright)
+                // ========================================
+                targetRotationY = startRotationY - (progress * (startRotationY - endRotationY));
+                targetRotationZ = startRotationZ - (progress * (startRotationZ - endRotationZ));
+
+                if (model) {
+                    model.rotation.y = targetRotationY;
+                    model.rotation.z = targetRotationZ;
+                }
+
+                currentRotationY = targetRotationY;
+                currentRotationZ = targetRotationZ;
+
+                featureDots.forEach(dot => dot.visible = false);
+                document.querySelectorAll('.feature-text').forEach(text => {
+                    text.classList.remove('active');
+                });
+            }
+
+            // PHASE 2: Model section (first part of channel)
+            else if (scrollInChannel >= 0 && scrollInChannel < modelSectionHeight) {
+                // ========================================
+                // PHASE 2 ROTATION: Hold at end position (180 deg, upright)
+                // ========================================
+                targetRotationY = endRotationY;
+                targetRotationZ = endRotationZ;
+
+                featureDots.forEach(dot => dot.visible = false);
+                document.querySelectorAll('.feature-text').forEach(text => {
+                    text.classList.remove('active');
+                });
+            }
+
+            // PHASE 3: Features section
+            else if (scrollInChannel >= modelSectionHeight && scrollInChannel < channelTotalHeight) {
+                const featuresProgress = (scrollInChannel - modelSectionHeight) / featuresSectionHeight;
+
+                let activeFeature = -1;
+                if (featuresProgress < 0.33) {
+                    activeFeature = 0;
+                } else if (featuresProgress < 0.66) {
+                    activeFeature = 1;
+                } else {
+                    activeFeature = 2;
+                }
+
+                featureDots.forEach((dot, index) => {
+                    dot.visible = (index === activeFeature);
+                });
+
+                document.querySelectorAll('.feature-text').forEach((text, index) => {
+                    if (index === activeFeature) {
+                        text.classList.add('active');
+                    } else {
+                        text.classList.remove('active');
+                    }
+                });
+
+                // Update dot indicators
+                const dotIndicators = document.querySelectorAll('.dot');
+                dotIndicators.forEach((dot, index) => {
+                    if (index === activeFeature) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+
+                // ========================================
+                // PHASE 3 ROTATION: Slight adjustments based on active feature
+                // ========================================
+                // Base position: end position (180 deg, upright)
+                const baseRotationY = endRotationY;
+                const baseRotationZ = endRotationZ;
+
+                if (activeFeature === 0) {
+                    // Feature 1 (Luke): Tilt slightly on Z axis
+                    targetRotationY = baseRotationY;
+                    targetRotationZ = baseRotationZ - 0.2;
+                } else if (activeFeature === 1) {
+                    // Feature 2 (Stender feste): Rotate left on Y axis
+                    targetRotationY = baseRotationY - 0.3;
+                    targetRotationZ = baseRotationZ;
+                } else if (activeFeature === 2) {
+                    // Feature 3 (Ferdig klemmer): Rotate right on Y axis
+                    targetRotationY = baseRotationY - 1;
+                    targetRotationZ = baseRotationZ;
+                }
+            }
+
+            // PHASE 4: After features section
+            else {
+                featureDots.forEach(dot => dot.visible = false);
+                document.querySelectorAll('.feature-text').forEach(text => {
+                    text.classList.remove('active');
+                    text.style.opacity = 0;
+                });
+            }
+        }
+
+        window.addEventListener('scroll', updateScroll);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (model) {
+                currentRotationY += (targetRotationY - currentRotationY) * rotationLerpSpeed;
+                currentRotationZ += (targetRotationZ - currentRotationZ) * rotationLerpSpeed;
+
+                const scrollY = window.scrollY;
+                const channelStart = document.querySelector('.section-above').offsetHeight;
+
+                if (scrollY >= channelStart) {
+                    model.rotation.y = currentRotationY;
+                    model.rotation.z = currentRotationZ;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+        updateScroll();
+    </script>
+</body>
+
+</html>

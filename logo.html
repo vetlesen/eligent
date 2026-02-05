@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face with Following Eyes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #D8EDEC;
+        }
+
+        .face-container {
+            position: relative;
+        }
+
+        svg {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="face-container">
+        <svg width="286" height="286" viewBox="0 0 286 286" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M268 0C277.941 0.000157318 286 8.05897 286 18V268C286 277.941 277.941 286 268 286H18C8.05898 286 0.000165389 277.941 0 268V18C0 8.05888 8.05888 4.51362e-07 18 0H268ZM143 22C76.1736 22 22.0001 76.1736 22 143C22 209.826 76.1735 264 143 264C209.826 264 264 209.826 264 143C264 76.1736 209.826 22 143 22Z"
+                fill="#005B61" />
+            <circle id="left-eye" cx="102" cy="143" r="18" fill="#005B61" />
+            <circle id="right-eye" cx="184" cy="143" r="18" fill="#005B61" />
+        </svg>
+    </div>
+
+    <script>
+        const leftEye = document.getElementById('left-eye');
+        const rightEye = document.getElementById('right-eye');
+        const svg = document.querySelector('svg');
+
+        // Original eye positions
+        const leftEyeOrigin = { x: 102, y: 143 };
+        const rightEyeOrigin = { x: 184, y: 143 };
+
+        // Face circle properties
+        const faceCenter = { x: 143, y: 143 };
+        const faceRadius = 121; // (264 - 22) / 2
+        const eyeRadius = 18;
+
+        // Maximum distance eyes can move from their origin
+        const maxEyeMovement = 80;
+        // Original distance between eye centers
+        const originalEyeDistance = rightEyeOrigin.x - leftEyeOrigin.x; // 82px
+        // Minimum distance when looking to the sides
+        const minSideDistance = eyeRadius * 2 + 8; // 44px
+
+        function calculateEyePosition(origin, mouseX, mouseY, svgRect) {
+            const scaleX = 286 / svgRect.width;
+            const scaleY = 286 / svgRect.height;
+
+            // Convert mouse position to SVG coordinates
+            const svgMouseX = (mouseX - svgRect.left) * scaleX;
+            const svgMouseY = (mouseY - svgRect.top) * scaleY;
+
+            // Calculate direction from eye origin to mouse
+            const dx = svgMouseX - origin.x;
+            const dy = svgMouseY - origin.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Normalize and apply max movement
+            let moveDistance = Math.min(distance, maxEyeMovement);
+            let newX = origin.x;
+            let newY = origin.y;
+
+            if (distance > 0) {
+                newX = origin.x + (dx / distance) * moveDistance;
+                newY = origin.y + (dy / distance) * moveDistance;
+            }
+
+            // Check if eye stays within face circle
+            const distFromFaceCenter = Math.sqrt(
+                Math.pow(newX - faceCenter.x, 2) +
+                Math.pow(newY - faceCenter.y, 2)
+            );
+
+            // Eye must stay inside face circle (with eye radius as buffer)
+            const maxDistFromCenter = faceRadius - eyeRadius;
+
+            if (distFromFaceCenter > maxDistFromCenter) {
+                // Clamp to face boundary
+                const angle = Math.atan2(newY - faceCenter.y, newX - faceCenter.x);
+                newX = faceCenter.x + Math.cos(angle) * maxDistFromCenter;
+                newY = faceCenter.y + Math.sin(angle) * maxDistFromCenter;
+            }
+
+            return { x: newX, y: newY };
+        }
+
+        function enforceMinDistance(leftPos, rightPos, svgMouseX) {
+            // Calculate how far the cursor is from center horizontally
+            // 0 = at center, 1 = at edge of face
+            const horizontalOffset = Math.abs(svgMouseX - faceCenter.x) / faceRadius;
+            const clampedOffset = Math.min(horizontalOffset, 1);
+
+            // Interpolate between original distance (center) and min side distance (edges)
+            const requiredDistance = originalEyeDistance - (originalEyeDistance - minSideDistance) * clampedOffset;
+
+            const dx = rightPos.x - leftPos.x;
+            const dy = rightPos.y - leftPos.y;
+            const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+            if (currentDistance < requiredDistance) {
+                // Push eyes apart to maintain required distance
+                const midX = (leftPos.x + rightPos.x) / 2;
+                const midY = (leftPos.y + rightPos.y) / 2;
+
+                // Direction from left to right (or default to horizontal if overlapping)
+                let dirX = dx;
+                let dirY = dy;
+                if (currentDistance < 0.001) {
+                    dirX = 1;
+                    dirY = 0;
+                } else {
+                    dirX = dx / currentDistance;
+                    dirY = dy / currentDistance;
+                }
+
+                // Push each eye half the required distance from midpoint
+                const halfDist = requiredDistance / 2;
+                leftPos.x = midX - dirX * halfDist;
+                leftPos.y = midY - dirY * halfDist;
+                rightPos.x = midX + dirX * halfDist;
+                rightPos.y = midY + dirY * halfDist;
+            }
+
+            return { left: leftPos, right: rightPos };
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            const svgRect = svg.getBoundingClientRect();
+            const scaleX = 286 / svgRect.width;
+            const svgMouseX = (e.clientX - svgRect.left) * scaleX;
+
+            let leftPos = calculateEyePosition(leftEyeOrigin, e.clientX, e.clientY, svgRect);
+            let rightPos = calculateEyePosition(rightEyeOrigin, e.clientX, e.clientY, svgRect);
+
+            // Enforce minimum distance between eyes (varies based on cursor position)
+            const adjusted = enforceMinDistance(leftPos, rightPos, svgMouseX);
+
+            leftEye.setAttribute('cx', adjusted.left.x);
+            leftEye.setAttribute('cy', adjusted.left.y);
+            rightEye.setAttribute('cx', adjusted.right.x);
+            rightEye.setAttribute('cy', adjusted.right.y);
+        });
+    </script>
+</body>
+
+</html>
